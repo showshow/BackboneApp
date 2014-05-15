@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Using Composed UI Controllers And Event Delegation</title>
+<style type="text/css">
+ 
+ul {
+height: 105px ;
+list-style-type: none ;
+margin: 0px 0px 20px 0px ;
+padding: 0px 0px 0px 0px ;
+}
+ 
+li {
+background-color: #F0F0F0 ;
+border: 2px solid #CCCCCC ;
+cursor: pointer ;
+float: left ;
+font-size: 18px ;
+height: 100px ;
+line-height: 100px ;
+margin: 0px 10px 0px 0px ;
+padding: 0px 0px 0px 0px ;
+text-align: center ;
+width: 125px ;
+}
+ 
+li.active {
+background-color: #FFF0F0 ;
+border-color: #CC0000 ;
+font-weight: bold ;
+}
+ 
+</style>
+<script src="js/lib/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+ 
+<h1>
+Using Composed UI Controllers And Event Delegation
+</h1>
+ 
+<!--
+This UL will be controlled by our list controller and its
+composed list item controller.
+--->
+<ul id="girls">
+<li>Sarah</li>
+<li>Tricia</li>
+<li>Katie</li>
+<li>Jill</li>
+</ul>
+ 
+ 
+ 
+<!-- When the DOM is ready (ie. now), setup scripts. -->
+<script type="text/javascript">
+//http://www.bennadel.com/blog/2034-using-composed-javascript-ui-controllers-with-event-delegation.htm
+ 
+// I am the list controller class.
+function ListController( target ){
+	// Store the target collection for our list controller.
+	// This is the UL we are controlling.
+	this.target = $( target );
+ 
+	// Store this controller with the DOM node. This way,
+	// we can get the controller from DOM collections.
+	this.target.data( "controller", this );
+ 
+	// I am the currently active list item.
+	this.activeListItem = null;
+ 
+	// I gather up and prepare the composed controllers.
+	this.initComposedElements();
+}
+ 
+// Define the class methods.
+ListController.prototype = {
+	// I initialize the given composed element, creating
+	// the appropriate child sub-class of Controller.
+	initComposedElement: function( childNode ){
+		new ListItemController( this, childNode );
+	},
+ 
+	// I gather up and prepare the composed elements for
+	// further initialization.
+	initComposedElements: function(){
+		var self = this;
+ 
+		// For this UL, we're going to collect each direct
+		// child LI and create a Controller instance for it.
+		this.target.children().each(
+			function( index, listItemNode ){
+				// Create the list item controller, but don't store it; since each controller
+				// is associated with a DOM node, we can
+				// offload the burden of aggregation to the DOM itself.
+				self.initComposedElement( listItemNode );
+			}
+		);
+ 
+		// Now that we have created the composed controllers,
+		// let's set up event delegation for the clicks. This
+		// way, we can handle the clicks with a single event	
+		// binding and still delegate to the composed UI components.
+		this.target.delegate("li", "click",
+			function( event ){
+				// Get the composed controller.
+				var controller = $( this ).data( "controller" );
+ 
+				// Pass off click-handling to the LI.
+				return(
+					controller.handleClick( event )
+				);
+		});
+	},
+ 
+ 
+	// I handle requests to make the given list item active.
+	makeListItemActive: function( listItem ){
+		// Check to see if we have a currently active item.
+		if (this.activeListItem){ 
+			// Deactivate the currently active list item.
+			this.activeListItem.deactivate(); 
+		}
+ 
+		// Store the new active list item.
+		this.activeListItem = listItem;
+ 
+		// Activate the given list item.
+		listItem.activate();
+	}
+};
+ 
+
+ 
+ 
+// I am the list item controller class.
+function ListItemController( listController, target ){
+	// Store the parent controller.
+	this.listController = listController;
+ 
+	// Store the target collection for our list item.
+	this.target = $( target );
+ 
+	// Store this controller with the DOM node. This way,
+	// we can get the controller from DOM collections.
+	this.target.data( "controller", this );
+ 
+	// NOTE: We are NOT going to set up any CLICK handling.
+	// The click event will be caught at the root controller
+	// level and then delegated to the appropriate list item.
+}
+ 
+// Define the class methods.
+ListItemController.prototype = {
+	// I activate this list item.
+	activate: function(){
+		this.target.addClass( "active" );
+	},
+ 
+ 
+	// I deactivate this list item.
+	deactivate: function(){
+		this.target.removeClass( "active" );
+	},
+ 
+ 
+	// I handle the mouse click event.
+	handleClick: function( event ){
+		// We want to make THIS list item active; but, that
+		// decision is not part of the local business logic.
+		// This needs to be passed up to the parent controller.
+		this.listController.makeListItemActive( this );
+	}
+};
+ 
+ 
+// Create our list controller.
+var listController = new ListController($( "#girls" ));
+ 
+</script>
+ 
+</body>
+</html>

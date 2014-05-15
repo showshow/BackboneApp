@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title></title>
+	<meta charset="utf-8">
+</head>
+<body>
+	<H1>List of todos</H1>
+	
+	<h1>无</h1>
+	<div>
+		<div>
+			<p>无ID和class</p>
+			<p>无ID和class2</p>
+			<p id="xpath1">id</p>
+		</div>
+		<div>无</div>
+		<div>
+			<div class="xpath2">class</div>
+		</div>
+	</div>
+	
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+	<script src="js/app/app.js"></script>
+	<script>
+		/*
+		$(function(){
+			var todos = new todoApp.Todos();
+			todos.fetch();
+			var list = new todoApp.TodosList({collection: todos});
+			$("body").append(list.el);
+		})
+		*/
+		
+		function readXPath(element) {
+			if (element.id!==""){//判断id属性，如果这个元素有id，则显 示//*[@id="xPath"]  形式内容
+				return '//*[@id=\"'+element.id+'\"]';
+			}
+
+			if (element.getAttribute("class")!==null){ //判断class属性，如果这个元素有class，则显 示//*[@class="xPath"]  形式内容
+				return '//*[@class=\"'+element.getAttribute("class")+'\"]';
+			}
+			//因为Xpath属性不止id和class，所以还可以更具class形式添加属性
+
+			//这里需要需要主要字符串转译问题，可参考js 动态生成html时字符串和变量转译（注意引号的作用）
+
+
+			if (element==document.body){//递归到body处，结束递归
+				return '/html/'+element.tagName;
+			}
+
+
+			var ix= 0,//在nodelist中的位置，且每次点击初始化
+				  siblings= element.parentNode.childNodes;//同级的子元素
+
+			for (var i= 0,l=siblings.length; i<l; i++) {
+				var sibling= siblings[i];
+				if (sibling==element){//如果这个元素是siblings数组中的元素，则执行递归操作
+					return arguments.callee(element.parentNode) + '/' + element.tagName + ((ix+1)==1 ? '' : '[' + (ix+1) + ']');//ix+1是因为xpath是从1开始计数的，element.tagName+((ix+1)==1?'':'['+(ix+1)+']')三元运算符，如果是第一个则不显示，从2开始显示
+				}else if(sibling.nodeType==1 && sibling.tagName==element.tagName){//如果不符合，判断是否是element元素，并且是否是相同元素，如果是相同的就开始累加
+					ix++;
+				}
+			}
+		};
+		
+		$(document).ready(function () {
+			var xpath = '', o;
+			$('*').click(function (e) {
+				e.stopPropagation();//停止冒泡
+				o = this;
+				alert(readXPath(o));
+			});
+		});
+	</script>
+</body>
+</html>

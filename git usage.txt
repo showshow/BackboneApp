@@ -4,5 +4,22 @@
 2. create local repository
 	$ git init
 3. add and commit
-	$ git add xx.txt
+	$ git add xxx.txt
 	$ git commit -m "commit description"
+4. status and diff
+	$ git status
+	$ git diff "xxx.txt"
+5. log
+	$ git log
+	$ git log --pretty=oneline
+6. rollback (from repository)
+	$ git reset --hard HEAD^	//back to last update
+	$ git reset --hard 3625655	//back to a special commit id
+	$ git reflog			//command history
+7. undo
+	$ git checkout -- "xxx.txt"	//clear workspace, 用版本库里的版本替换工作区的版本
+	$ git reset HEAD "xxx.txt"	//unstage trace, 销掉暂存区
+8. delete
+	$ git rm "xxx.txt"
+	$ git checkout -- "xxx.txt"	//undo delete operation
+9. 

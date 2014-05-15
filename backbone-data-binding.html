@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title></title>
+	<meta charset="utf-8">
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+</head>
+<body>
+	<div class="list"></div>
+	
+	<script type="text/template" id="artistTemplate">
+		Enter Artist Name:<input class="nameField" />
+		<p>The name you entered is <span class="nameText"></span></p>
+	</script>
+	<script>
+	//http://www.9bitstudios.com/2013/10/backbone-js-data-binding/
+		var ArtList = Backbone.View.extend({
+			el: $('.list'),
+			initialize: function(){
+				this.art = new Art({name: '2Pac', birthday: 'June 16, 1971', hometown: 'Harlem, New York, NY', favoriteColor: 'blue'});
+			},
+			render: function(){
+				var markup = _.template($('#artistTemplate').html());
+				this.$el.html(markup);
+			},
+			events: {
+				"keyup .nameField": "nameChanged"
+			},
+			nameChanged: function(){
+				console.log("Art model changed...");
+				var name = $(".nameField").val();
+				this.art.set("name", name);
+				$(".nameText").html(name);
+			}
+		});
+		
+		var Art = Backbone.Model.extend({
+			defaults: {
+				name: "New Art",
+				birthday: "January 1, 1970",
+				hometown: "Los Angeles, CA",
+				favoriteColor: "blue"
+			},
+			initialize: function(){
+				console.log("New Art is created...");
+			}
+		});
+		
+		var artList = new ArtList();
+		artList.render();
+	</script>
+	
+	
+</body>
+</html>

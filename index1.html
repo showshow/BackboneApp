@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title></title>
+	<meta charset="utf-8">
+</head>
+<body>
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+	<script src="js/app/app.js"></script>
+	<script>
+		//http://www.smashingmagazine.com/2013/08/09/backbone-js-tips-patterns-2/
+		//demo-1: deep copy
+		var Person = Backbone.Model.extend({
+			validate: function(attributes){
+				if(isNaN(attributes.address.zipCode)){
+					return 'Address zip code must be a number!';
+				}
+			},
+			defaults: {
+				'name': 'John Doe',
+				'address': {
+					'street': '1st street',
+					'city': 'Austin',
+					'state': 'TX',
+					'zipCode': 78701
+				} 
+			}
+		});
+		
+		var person = new Person({
+			'name': 'Phillip W'
+		});
+		
+		console.log(person.get('name'));
+		
+		person.set('name', 'Phillip W.', {validate: true});
+		console.log(person.get('name'));
+		
+		//var address = person.get('address');
+		var address = $.extend(true, {}, person.get('address'));	//deep copy !!
+		console.log("address = " + JSON.stringify(address));
+		
+		address.zipCode = 'hello, world';
+		//person.set('address', address, {validate: true});
+		console.log("new address = " + JSON.stringify(person.get('address')));
+		
+		//demo-2: getter/setter to hide data structure change.
+		var Hotel = Backbone.Model.extend({
+			defaults: {
+				'availableRooms': ['a'],
+				'rooms': {
+					'a': {
+						'size': 1200,
+						'bed': 'queen'
+					},
+					'b': {
+						'size': 900,
+						'bed': 'twin'
+					},
+					'c': {
+						'size': 1100,
+						'bed': 'twin'
+					}
+				}
+			},
+			getRooms: function(){
+				$.extend(true, {}, this.get('rooms'));
+			},
+			getRoomByBed: function(bed){
+				return _.where(this.get('rooms'), {'bed': bed});
+			}
+		});
+		var hotel = new Hotel();
+		console.log(JSON.stringify(hotel.getRoomByBed('twin')));
+		
+		//demo-3
+		var Model = Backbone.Model.extend({
+			defaults: {
+				items: [
+					{
+						'name': 'One',
+						'id': 1
+					},
+					{
+						'name': 'Two',
+						'id': 2
+					},
+					{
+						'name': 'Three',
+						'id': 3
+					}
+				]
+			}
+		});
+		var List = Backbone.Collection.extend({
+			model: Model
+		});
+		
+		var View = Backbone.View.extend({
+			//template: _.template($('#list-template').html()),
+			el: $('body'),
+			events: {
+				'#items li a': 'setSelectedItem'
+			},
+			initialize: function(){
+				this.collection = new List();
+				this.render();
+			},
+			render: function(){
+				//$(this.el).html(this.template(this.model.toJSON()));
+				//$(this.el).html(this.model.toJSON());
+				//$(this.el).html('<span>hello, world</span>');
+			},
+			setSelectedItem: function(event){
+				var selectedItem = $(event.currentTarget);
+				$('#items li a').removeClass('selected');
+				selectedItem.addClass('selected');
+				return false;
+			}
+		});
+		
+		//var view = new View();
+		
+		
+		//////////////   next example   ////////////////////
+		(function($){
+			//http://arturadib.com/hello-backbonejs/
+			/* example-1 */
+			var ListView1 = Backbone.View.extend({
+				el: $('body'),	//attach this.el to an existing element.
+				initialize: function(){
+					_.bindAll(this, 'render');
+					this.render();
+				},
+				render: function(){	//called by user manually, in charge of rendering the entire view in the this.el
+					$(this.el).append('<ul><li>hello, world</li></ul>');
+				}
+			});
+			
+			
+			/* example-2: DOM event <--> view method */
+			var ListView2 = Backbone.View.extend({
+				el: $('body'),
+				events: {
+					'click button#add': 'addItem'
+				},
+				initialize: function(){
+					_.bindAll(this, 'render', 'addItem');
+					
+					this.count = 0;
+					this.render();
+				},
+				render: function(){
+					$(this.el).append('<button id="add">Add Item List</button>');
+					$(this.el).append('<ul></ul>');
+				},
+				addItem: function(){
+					this.count++;
+					$('ul', this.el).append("<li>hello world " + this.count + "</li>");
+				}
+			});
+			
+			/* example-3: same result with example2 but use model. */
+			var Item = Backbone.Model.extend({
+				defaults: {
+					part1: 'hello',
+					part2: 'world'
+				}
+			});
+			var List = Backbone.Collection.extend({
+				model: Item
+			});
+			var ListView3 = Backbone.View.extend({
+				el: $('body'),
+				events: {
+					'click button#add': 'addItem'
+				},
+				initialize: function(){
+					_.bindAll(this, 'render', 'addItem', 'appendItem');
+					
+					this.collection = new List();
+					this.collection.bind('add', this.appendItem);	//model change <--> view
+					
+					this.count=0;
+					this.render();
+				},
+				render: function(){
+					var self = this;
+					$(this.el).append('<button id="add">Add Item List</button>');
+					$(this.el).append('<ul></ul>');
+					_(this.collection.models).each(function(item){
+						self.appendItem(item);
+					}, this);
+				},
+				addItem: function(){
+					this.count++;
+					var item = new Item();
+					item.set({'part2': item.get('part2') + this.count});
+					this.collection.add(item);
+				},
+				appendItem: function(item){
+					$('ul', this.el).append('<li>' + item.get('part1') + " " + item.get('part2') + "</li>");
+				}
+			});
+			
+			/* example-4: delegate model rendering to a view. */
+			var ItemView = Backbone.View.extend({
+				tagName: 'li',	//root tag in this.el
+				initialize: function(){
+					_.bindAll(this, 'render');
+				},
+				render: function(){
+					$(this.el).html('<span>' + this.model.get('part1') + " " + this.model.get('part2') + "</span>");
+					return this;	//for chainable call, like render().el
+				}
+			});
+			var ListView4 = Backbone.View.extend({
+				el: $('body'),
+				events: {
+					'click button#add': 'addItem'
+				},
+				initialize: function(){
+					_.bindAll(this, 'render', 'addItem', 'appendItem');
+					
+					this.collection = new List();
+					this.collection.bind('add', this.appendItem);
+					
+					this.count=0;
+					this.render();
+				},
+				render: function(){
+					var self = this;
+					$(this.el).append('<button id="add">Add Item List</button>');
+					$(this.el).append('<ul></ul>');
+					_(this.collection.models).each(function(item){	//if collection is not empty, display these model.
+						self.appendItem(item);
+					}, this);
+				},
+				addItem: function(){
+					this.count++;
+					var item = new Item();
+					item.set({'part2': item.get('part2') + this.count});
+					this.collection.add(item);
+				},
+				appendItem: function(item){
+					var itemView = new ItemView({
+						model: item
+					});
+					$('ul', this.el).append(itemView.render().el);	//not render individual item, each ItemView do the job !!
+				}
+			});
+			
+			/* example-5:  */
+			Backbone.sync = function(method, model, success, error){
+				success();
+			};
+			
+			var ItemView2 = Backbone.View.extend({	//swap and delete event just happen in individual item and its view.
+				tagName: 'li',
+				events: {
+					'click span.swap': 'swap',
+					'click span.delete': 'remove'
+				},
+				initialize: function(){
+					_.bindAll(this, 'render', 'unrender', 'swap', 'remove');
+					
+					this.model.bind('change', this.render);
+					this.model.bind('unchange', this.unrender);
+				},
+				render: function(){
+					$(this.el).html('<span style="color:black;">'+this.model.get('part1')+' '+this.model.get('part2')+'</span>' + ' &nbsp; &nbsp; ' + 
+					'<span class="swap" style="font-family:sans-serif; color:blue; cursor:pointer;">[swap]</span>' + 
+					'<span class="delete" style="font-family:sans-serif; color:red; cursor:pointer;">[delete]</span>');
+					return this;
+				},
+				unrender: function(){
+					$(this.el).remove();
+				},
+				swap: function(){
+					var swapped = {
+						'part1': this.model.get('part2'),
+						'part2': this.model.get('part1')
+					};
+					this.model.set(swapped);	//'change' event triggered.
+				},
+				remove: function(){
+					this.model.destroy();
+				}
+			});
+			var ListView = Backbone.View.extend({
+				el: $('body'),
+				events: {
+					'click button#add': 'addItem'
+				},
+				initialize: function(){
+					_.bindAll(this, 'render', 'addItem', 'appendItem');
+					
+					this.collection = new List();
+					this.collection.bind('add', this.appendItem);
+					
+					this.count=0;
+					this.render();
+				},
+				render: function(){
+					var self = this;
+					$(this.el).append('<button id="add">Add Item List</button>');
+					$(this.el).append('<ul></ul>');
+					_(this.collection.models).each(function(item){	//if collection is not empty, display these model.
+						self.appendItem(item);
+					}, this);
+				},
+				addItem: function(){
+					this.count++;
+					var item = new Item();
+					item.set({'part2': item.get('part2') + this.count});
+					this.collection.add(item);
+				},
+				appendItem: function(item){
+					var itemView = new ItemView2({
+						model: item
+					});
+					$('ul', this.el).append(itemView.render().el);	//not render individual item, each ItemView do the job !!
+				}
+			});
+			
+			//var view = new ListView();
+		})(jQuery);
+		
+		//================= event example ===========================
+		var obj = {};
+		_.extend(obj, Backbone.Events);
+		obj.on('alert', function(msg){
+			console.log("triggered: " + msg);
+		});
+		obj.trigger('alert', 'a message');
+		
+		///////
+		var ImageModel = Backbone.Model.extend({
+			initialize: function(){
+				this.on('change', this.someChange, this);	//event: change/destroy/save
+			},
+			defaults: {
+				title : 'untitled',
+				description : 'no description available',
+				owner : 'anonymous',
+				date : 'no date supplied'
+			},
+			someChange: function(model, options){
+				console.log('some changed, ' + JSON.stringify(options));
+			},
+		});
+		var photo = new ImageModel({title: 'awesome image'});
+		photo.set('title', 'really awesome indeed');
+		photo.set({'title': 'well, i agree'}, {'agree': 'yep'});
+		
+		
+	</script>
+	<script id="list-template" type="template">
+		<ul id="items">
+			<% for(i=items.length-1; i >=0; i--){ %>
+			<li><a href="#" data-id="<%= item[i].id %>"> <%= item[i].id %> </a></li>
+			<% } %>
+		</ul>
+	</script>
+</body>
+</html>

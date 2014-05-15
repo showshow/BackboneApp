@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title></title>
+	<meta charset="utf-8">
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+</head>
+<body>
+	
+	<script>
+	//http://www.codebeerstartups.com/2013/01/routers-in-backbone-js-learning-backbone-js
+		(function(){
+			window.APP = {
+				Models: {},
+				Collections: {},
+				Views: {},
+				Router: {}
+			};
+		})();
+		APP.Router = Backbone.Router.extend({
+			routes: {
+				'': 'index',
+				'show': 'show',
+				'hide/:id': 'hide',
+				'download/*random': 'download',
+				'search/:query': 'search',
+				'*default': 'default'
+			},
+			index: function(){
+				$('body').append("Index rouer has been called...");
+			},
+			show: function(){
+				$('body').append("Show router has been called...");
+			},
+			hide: function(id){
+				$('body').append("Hide router has been called, with id: " + id);
+			},
+			download: function(random){
+				$('body').append("Download router has been called with random: " + random);
+			},
+			search: function(query){
+				$('body').append("Search router is called with query: " + query);
+			},
+			default: function(){
+				$('body').append("This route is not hanled.. you tried to access: ");
+			}
+		});
+		
+		new APP.Router;
+		Backbone.history.start();
+	</script>
+	
+</body>
+</html>
