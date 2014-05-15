@@ -1,0 +1,8 @@
+1. global config
+	$ git config --global user.name "showshow"
+	$ git config --global user.email "xxx@gmail.com"
+2. create local repository
+	$ git init
+3. add and commit
+	$ git add xx.txt
+	$ git commit -m "commit description"
