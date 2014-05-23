@@ -13,3 +13,7 @@ _.extend vs. $.extend:
 shallow copy vs. deep copy
 the way they deal with sub-objects or nested objects.
 
+
+
+http://www.azavea.com/blogs/labs/tag/backbone-js/
+http://backbonefu.com/2013/03/implementing-live-updates-with-backbone-js/
