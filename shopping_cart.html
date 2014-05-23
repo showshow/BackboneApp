@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Shopping Cart</title>
+	<meta charset="utf-8">
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+	
+</head>
+<body>
+	
+
+	<script>
+		//http://javascriptplayground.com/blog/2012/04/backbone-js-tutorial-1/
+		var Item = Backbone.Model.extend({
+			defaults: {
+				price: 35,
+				photo: "http://www.placedog.com/100/100"
+			}
+		});
+		
+		var Cart = Backbone.Collection.extend({
+			model: Item
+		});
+		
+		var items = [
+			{ title: "Macbook Air", price: 799 },
+			{ title: "Macbook Pro", price: 999 },
+			{ title: "The new iPad", price: 399 },
+			{ title: "Magic Mouse", price: 50 },
+			{ title: "Cinema Display", price: 799 }
+		];
+
+		var cartCollection = new Cart(items);
+		
+		
+	</script>
+</body>
+</html>

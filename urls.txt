@@ -1,0 +1,15 @@
+1. Eloquent JavaScript(µç×Ó°æ): http://eloquentjavascript.net/contents.html
+2. Understanding bind and bindAll in Backbone.js : http://blog.bigbinary.com/2011/08/18/understanding-bind-and-bindall-in-backbone.html
+3. cheat sheet: http://www.topdesignmag.com/20-must-have-cheat-sheets-for-web-developers/
+4. underscore API: http://www.cheatsheetjs.com/underscore.js.html
+5. http://chrisawren.com/posts/Learning-Advanced-JavaScript-via-the-Backbone-js-source-code
+6. UI-components: http://www.azavea.com/blogs/labs/2012/11/loosely-coupled-reusable-ui-components-in-backbone-js-4/
+
+
+
+
+
+_.extend vs. $.extend:
+shallow copy vs. deep copy
+the way they deal with sub-objects or nested objects.
+
