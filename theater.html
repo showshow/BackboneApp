@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Shopping Cart</title>
+	<meta charset="utf-8">	
+</head>
+<body>
+	<H1>Theater</H1>
+	<input type="button" value="Add Item" id="butAddItem"/>
+	<div id="mainContainer"></div>
+	<script type="text/template" id="templ-movies">
+		<ul></ul>
+	</script>
+	<script type="text/template" id="templ-movie">
+		<div>*******************************************************</div>
+		<div><%= Id %> </div>
+		<div><%= Name %> </div>
+		<div><%= AverageRating %> </div>
+		<div><%= ReleaseYear %> </div>
+		<div><%= Url %> </div>
+		<div><%= Rating %> </div>
+	</script>
+
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+	<script>
+		var Theater = {
+			Models: {},
+			Collections: {},
+			Views: {},
+			Templates: {}
+		};
+		//model and collection
+		Theater.Models.Movie = Backbone.Model.extend({});
+		Theater.Collections.Movies = Backbone.Collection.extend({
+			model: Theater.Models.Movie,
+			url: "data/movies.json",
+			initialize: function(){
+				console.log("Movies intialized.");
+			}
+		});
+		
+		//single view
+		Theater.Templates.movie = _.template($('#templ-movie').html());
+		Theater.Views.Movie = Backbone.View.extend({
+			tagName: "li",
+			template: Theater.Templates.movie,
+			
+			initialize: function(){
+				_.bindAll(this, "render");
+				this.render();
+				this.model.bind('destroy', this.destroyItem, this);
+				this.model.bind('remove', this.removeItem, this);
+			},
+			render: function(){
+				return $(this.el).append(this.template(this.model.toJSON()));
+			},
+			removeItem: function (model) {
+				console.log("Remove - " + model.get("Name"));
+				this.remove();
+			}
+		});
+		//views
+		Theater.Templates.movies = _.template($("#templ-movies").html());
+		Theater.Views.Movies = Backbone.View.extend({
+			el: $('#mainContainer'),
+			template: Theater.Templates.movies,
+			
+			initialize:  function(){
+				console.log("View initialize.");
+				_.bindAll(this, "render", "addOne", "addAll");
+				this.collection.bind("reset", this.render, this);	//reset event ?? not work
+				this.collection.bind("add", this.addOne, this);
+			},
+			render: function(){
+				console.log("View render.");
+				console.log("View model lenght = " + this.collection.length);
+				$(this.el).html(this.template);
+				this.addAll();
+			},
+			addOne: function(model){
+				console.log("add one.");
+				view = new Theater.Views.Movie({model: model});
+				$('ul', this.el).append(view.el);
+			},
+			addAll: function(){
+				console.log("add all.");
+				this.collection.each(this.addOne);
+			}
+		});
+		
+		//router
+		Theater.Router = Backbone.Router.extend({
+			routes: {
+				"": "defaultRoute"
+			},
+			defaultRoute: function(){
+				console.log("default route.");
+				Theater.movies = new Theater.Collections.Movies();
+				new Theater.Views.Movies({collection: Theater.movies});
+				Theater.movies.fetch({reset: true});
+				console.log("Router model length = " + Theater.movies.length);
+			}
+		});
+		var appRouter = new Theater.Router();
+		Backbone.history.start();
+	</script>
+	<script>
+		$('#butAddItem').click(null, function(){
+			var model = new Theater.Models.Movie({
+				"Id": "BVP3s",
+				"Name": "Lord of the Rings ",
+				"AverageRating": 4.3,
+				"ReleaseYear": 2003,
+				"Url": "http://www.netflix.com/.....",
+				"Rating": "PG-13"
+			});
+			
+			Theater.movies.add(model);
+			console.log("after add length = " + Theater.movies.length);
+		});
+	</script>
+</body>
+</html>
