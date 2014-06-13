@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Custom Event Pub-sub</title>
+	<meta charset="utf-8">
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+</head>
+<body>
+	
+	<script>
+		//http://www.cnblogs.com/snandy/archive/2011/05/30/2062990.html
+		function addEvent(obj, type, handler){
+			obj[type] = handler;
+		}
+		
+		function removeEvent(obj, type){
+			delete obj[type];
+		}
+		
+		function dispatch(obj, type){
+			obj[type]();
+		}
+		
+		var obj = {};
+		function f(){
+			console.log("event");
+		}
+		addEvent(obj, 'click', f);
+		dispatch(obj, 'click');
+	</script>
+	
+	<script>
+		PubSub = {
+			subscribe: function(event, callback){
+				var events = this._events || (this._events = {});
+				this._events[event] || (this._events[event] = []).push(callback);
+			},
+			publish: function(){
+				var args = Array.prototype.slice.call(arguments, 0);
+				var event = args.shift();
+				
+				var events, list;
+				if(!(events = this._events)) return;
+				if(!(list = this._events[event])) return;
+				
+				for(var i = 0; i < list.length; i++){
+					list[i].apply(this, args);
+				}
+				
+				return this;
+			}
+		};
+		
+		PubSub.subscribe("go", function(){
+			alert("Go!");
+		});
+		window.onclick = function(){
+			console.log('sss');
+			PubSub.publish('go');
+		};
+		
+	</script>
+</body>
+</html>

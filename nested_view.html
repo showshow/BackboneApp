@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Nested View</title>
+	<meta charset="utf-8">
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+	<style>
+		div .table {display: table; border:#505050 solid 1px; padding: 5px;}
+        div .tableRow {display: table-row}
+        div .tableCell {display: table-cell; border:#737373 solid 1px; padding: 5px;}
+	</style>
+</head>
+<body>
+	<div id="container-movieList" class="table"></div>
+	
+	<script type="text/template" id="template-movieItem">
+		<div id="name" class="tableCell"><%=title%></div>
+		<div id="releaseYear" class="tableCell"><%=releaseYear%></div>
+	</script>
+	
+	<script>
+			
+		var Movie = Backbone.Model.extend({
+			initialize: function(){
+				this.on("change", this.modelChange);
+			},
+			modelChange: function(){
+				console.log("model change");
+			}
+		});
+		var Movies = Backbone.Collection.extend({
+			model: Movie,
+			initialize: function(){
+				//alert("aaaa");
+			}
+		});
+		
+		var MovieListView = Backbone.View.extend({
+			type: "MovieListItem",
+			el: "#container-movieList",
+			initialize: function(){
+				
+			},
+			render: function(){
+				console.log("list view render");
+				_.each(this.collection.models, this.processMovie, this);
+			},
+			processMovie: function(movie){
+				/*console.log("type = " + this.type);
+				console.log("title: " + movie.get("title"));*/
+				var childMovieItemView = new MovieItemView({model: movie});
+				$(this.el).append(childMovieItemView.render().$el);
+			}
+		});
+		
+		var MovieItemView = Backbone.View.extend({
+			type: "MovieItemView",
+			template: _.template($("#template-movieItem").html()),
+			tagName: "div",
+			className: "tableRow",
+			initialize: function(){
+				//console.log(this.model);
+				//_.bindAll(this, "render");
+				this.model.on("change", this.modelChanged, this);
+			},
+			events: {
+				"click": "viewClicked"
+			},
+			render: function(){
+				var outputHtml = this.template(this.model.toJSON());
+				this.$el.html(outputHtml);
+				return this;
+			},
+			modelChanged: function(model, changes){
+				console.log("modelChanged: " + model.get("title"));
+				this.render();
+			},
+			viewClicked: function(event){
+				console.log("viewClicked: " + this.model.get("title"));
+			}
+		});
+		
+		var myMovies = [
+            new Movie({ "id": "1", "title": "Bag It", "releaseYear": 2010 }),
+            new Movie({ "id": "2", "title": "Lost Boy: The Next Chapter", "releaseYear": 2009 }),
+            new Movie({ "id": "3", "title": "To Live & Ride in L.A.", "releaseYear": 2010 }),
+            new Movie({ "id": "4", "title": "K-ON!: Vol. 1", "releaseYear": 2009 }),
+            new Movie({ "id": "5", "title": "Archer: Season 2: Disc 1", "releaseYear": 2011 })
+        ];
+		
+		var movies = new Movies(myMovies);
+		/*
+		var movieItemView1 = new MovieItemView({model: movies.at(0)});
+		$('#container-movieList').append(movieItemView1.render().$el);
+		
+		var movieItemView2 = new MovieItemView({model: movies.get(2)});
+		$('#container-movieList').append(movieItemView2.render().$el);
+		
+		var movieItemView3 = new MovieItemView({model: movies.at(2)});
+		$('#container-movieList').append(movieItemView3.render().$el);
+		
+		movies.at(0).set({ title: "Star Wars", releaseYear: 1977 });
+		movies.at(1).set({ title: "Star Wars - Empire Strikes Back", releaseYear: 1980 });
+		*/
+		
+		var movieListView = new MovieListView({collection: movies});
+		movieListView.render();
+	</script>
+
+</body>
+</html>

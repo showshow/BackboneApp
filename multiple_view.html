@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Multple View</title>
+	<meta charset="utf-8">
+	<script src="js/lib/jquery-1.9.1.min.js"></script>
+	<script src="js/lib/underscore-min-1.4.4.js"></script>
+	<script src="js/lib/backbone-min-1.0.0.js"></script>
+	<style>
+		div .table {display: table; border:#505050 solid 1px; padding: 5px;}
+        div .tableRow {display: table-row}
+        div .tableCell {display: table-cell; border:#737373 solid 1px; padding: 5px;}
+	</style>
+</head>
+<body>
+	<div id="container-movieList" class="table"></div>
+	
+	<div id="container-movieDetailEdit">
+		Title: <input type="text" id="txtMovieTitle">
+		Release Year: <input type="text" id="txtMovieReleaseYear">
+		<input type="button" id="butChange" value="Change Record">
+	</div>
+	
+	<div id="container-nestdata"></div>
+	
+	<script type="text/template" id="template-movieItem">
+		<div id="name" class="tableCell"><%=title%></div>
+		<div id="releaseYear" class="tableCell"><%=releaseYear%></div>
+	</script>
+	
+	<script id="my-template" type="text/template">
+		<p>type: <%= type %></p>
+		<p>name: <%= name %></p>
+		<p>read address: <%= _.find(this.addresses, function(addr){ return addr.type == "read_address" }).address %> </p>
+		<p>read address value: <%= _.find(this.addresses, function(addr){ return addr.type == "read_address" }).value %> </p>
+		<p>write address: <%= _.find(this.addresses, function(addr){ return addr.type == "write_address" }).address %> </p>
+	</script>
+	
+	<script id="my-template2" type="text/template">
+		<p>type: <%= type %></p>
+		<p>name: <%= name %></p>
+		<p>read address: <%= getAddress("read_address").address %> </p>
+		<p>read address value: <%= getAddress("read_address").value %> </p>
+		<p>write address: <%= getAddress("write_address").address %> </p>
+	</script>
+	
+	<script>
+		var PubSub = function(){
+			this.events = _.extend({}, Backbone.Events);
+		};
+		var pubSub = new PubSub();
+			
+		var Movie = Backbone.Model.extend({
+			initialize: function(){
+				this.on("change", this.modelChange);
+			},
+			modelChange: function(){
+				console.log("model change");
+			}
+		});
+		var Movies = Backbone.Collection.extend({
+			model: Movie,
+			initialize: function(){
+				//alert("aaaa");
+			}
+		});
+		
+		var MovieListView = Backbone.View.extend({
+			type: "MovieListItem",
+			el: "#container-movieList",
+			initialize: function(){
+				
+			},
+			render: function(){
+				console.log("list view render");
+				_.each(this.collection.models, this.processMovie, this);
+			},
+			processMovie: function(movie){
+				/*console.log("type = " + this.type);
+				console.log("title: " + movie.get("title"));*/
+				var childMovieItemView = new MovieItemView({model: movie});
+				$(this.el).append(childMovieItemView.render().$el);
+			}
+		});
+		
+		var MovieItemView = Backbone.View.extend({
+			type: "MovieItemView",
+			template: _.template($("#template-movieItem").html()),
+			tagName: "div",
+			className: "tableRow",
+			initialize: function(){
+				//console.log(this.model);
+				//_.bindAll(this, "render");
+				this.model.on("change", this.modelChanged, this);
+			},
+			events: {
+				"click": "viewClicked"
+			},
+			render: function(){
+				var outputHtml = this.template(this.model.toJSON());
+				this.$el.html(outputHtml);
+				return this;
+			},
+			modelChanged: function(model, changes){
+				console.log("modelChanged: " + model.get("title"));
+				this.render();
+			},
+			viewClicked: function(event){
+				console.log("viewClicked: " + this.model.get("title"));
+				pubSub.events.trigger("movie:selected", this.model);
+			}
+		});
+		
+		var MovieDetailView = Backbone.View.extend({
+			el: "#container-movieDetailEdit",
+			initialize: function(){
+				pubSub.events.on("movie:selected", this.movieSelected, this);
+			},
+			events: {
+				"click #butChange": "viewChanged"
+			},
+			render: function(){
+				var title = this.model.get("title");
+				this.$el.find("#txtMovieTitle").val(title);
+				
+				var releaseYear = this.model.get("releaseYear");
+				this.$el.find("#txtMovieReleaseYear").val(releaseYear);
+			},
+			movieSelected: function(movie){
+				this.model = movie;
+				this.render();
+			},
+			viewChanged: function(){
+				var title = this.$el.find("#txtMovieTitle").val();
+				this.model.set("title", title);
+				
+				var releaseYear = this.$el.find("#txtMovieReleaseYear").val();
+				this.model.set("releaseYear", releaseYear);
+			}
+		});
+		
+		var myMovies = [
+            new Movie({ "id": "1", "title": "Bag It", "releaseYear": 2010 }),
+            new Movie({ "id": "2", "title": "Lost Boy: The Next Chapter", "releaseYear": 2009 }),
+            new Movie({ "id": "3", "title": "To Live & Ride in L.A.", "releaseYear": 2010 }),
+            new Movie({ "id": "4", "title": "K-ON!: Vol. 1", "releaseYear": 2009 }),
+            new Movie({ "id": "5", "title": "Archer: Season 2: Disc 1", "releaseYear": 2011 })
+        ];
+		
+		var movies = new Movies(myMovies);
+		var movieListView = new MovieListView({collection: movies});
+		movieListView.render();
+		
+		var movieDetailView = new MovieDetailView();
+	</script>
+	<script>
+		//http://lostechies.com/derickbailey/2012/04/26/view-helpers-for-underscore-templates/
+		var data = {
+			type: "something",
+			name: "whatever",
+			addresses: [
+				{
+					type: "read_address",
+					address: "1/2/3",
+					value: "10"
+				},
+				{
+					type: "write_address",
+					address: "1/2/4"
+				}
+			]
+		};
+		
+		var viewHelpers = {
+			getAddress: function(type){
+				var address = _.find(this.addresses, function(addr) {
+					return addr.type == type
+				});
+				return address;
+			}
+		}
+
+		var NestDataView = Backbone.View.extend({
+			el: "#container-nestdata",
+			//template: _.template($("#my-template").html()),
+			template: _.template($("#my-template2").html()),	//view helper
+			initialize: function(){
+				console.log("nest data view.");
+				_.bindAll(this, "render");
+				this.render();
+			},
+			render: function(){
+				_.extend(data, viewHelpers);	//view helper
+
+				$(this.el).html(this.template(data));
+			}
+		});
+		var nestDataView = new NestDataView({model: data});
+	</script>
+	<script>
+		//http://ozkatz.github.io/avoiding-common-backbonejs-pitfalls.html	Backbone pitfall !!		//backbone pitfalls
+		//http://coenraets.org/blog/2012/01/backbone-js-lessons-learned-and-improved-sample-app/	//lessons from backbone
+		//http://www.codemag.com/Article/1312061	organize js code.
+		//http://chrisawren.com/posts/Learning-Advanced-JavaScript-via-the-Backbone-js-source-code
+		//http://tinnedfruit.com/2011/03/25/testing-backbone-apps-with-jasmine-sinon-2.html		//testing
+		//http://aaronhardy.com/javascript/javascript-architecture-the-basics/			javascript project architecture
+		//
+		
+	</script>
+</body>
+</html>
